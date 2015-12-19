@@ -301,6 +301,7 @@ static const struct
     { "mouse_move_pages_viewer", &mcview_mouse_move_pages },
     { "mouse_close_dialog", &mouse_close_dialog},
     { "fast_refresh", &fast_refresh },
+    { "listbox_wraparound_mouse_scroll", &listbox_wraparound_mouse_scroll },
     { "drop_menus", &drop_menus },
     { "wrap_mode",  &mcview_global_wrap_mode},
     { "old_esc_mode", &old_esc_mode },

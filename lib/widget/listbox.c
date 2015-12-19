@@ -49,6 +49,7 @@
 /*** global variables ****************************************************************************/
 
 const global_keymap_t *listbox_map = NULL;
+gboolean listbox_wraparound_mouse_scroll = TRUE;
 
 /*** file scope macro definitions ****************************************************************/
 
@@ -502,12 +503,12 @@ listbox_event (Gpm_Event * event, void *data)
             listbox_fwd_n (l, local.y - w->lines);
         else if ((local.buttons & GPM_B_UP) != 0)
         {
-            listbox_back (l, FALSE);
+            listbox_back (l, listbox_wraparound_mouse_scroll);
             ret = MOU_NORMAL;
         }
         else if ((local.buttons & GPM_B_DOWN) != 0)
         {
-            listbox_fwd (l, FALSE);
+            listbox_fwd (l, listbox_wraparound_mouse_scroll);
             ret = MOU_NORMAL;
         }
         else

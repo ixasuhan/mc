@@ -60,6 +60,8 @@ typedef struct WListbox
 
 extern const global_keymap_t *listbox_map;
 
+extern gboolean listbox_wraparound_mouse_scroll;
+
 /*** declarations of public functions ************************************************************/
 
 WListbox *listbox_new (int y, int x, int height, int width, gboolean deletable, lcback_fn callback);
