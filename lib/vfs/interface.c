@@ -223,7 +223,7 @@ mc_open (const vfs_path_t * vpath, int flags, ...)
     return result;
 }
 
-int mc_store(int dest_desc, char* src_filename)
+int mc_store(int dest_desc, const char* src_filename)
 {
     struct vfs_class *vfs;
     int result;

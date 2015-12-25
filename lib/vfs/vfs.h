@@ -310,7 +310,7 @@ int mc_setctl (const vfs_path_t * vpath, int ctlop, void *arg);
 int mc_open (const vfs_path_t * vpath, int flags, ...);
 
 int mc_can_store(const vfs_path_t * vpath);
-int mc_store(int dest_desc, char* src_desc);
+int mc_store(int dest_desc, const char* src_desc);
 int mc_islocal(const vfs_path_t * vpath);
 
 
