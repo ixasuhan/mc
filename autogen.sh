@@ -11,6 +11,16 @@ set -e
 : ${ACLOCAL=aclocal}
 : ${AUTOPOINT=autopoint}
 : ${LIBTOOLIZE=libtoolize}
+
+if [ "$(uname)" == "Darwin" ] 
+then
+    if [ "$(which glibtoolize)" != "" ] 
+    then
+     LIBTOOLIZE=glibtoolize
+    fi
+fi
+echo $LIBTOOLIZE
+
 : ${XGETTEXT=xgettext}
 
 srcdir=`dirname $0`
