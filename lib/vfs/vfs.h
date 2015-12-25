@@ -153,6 +153,10 @@ typedef struct vfs_class
     int (*which) (struct vfs_class * me, const char *path);
 
     void *(*open) (const vfs_path_t * vpath, int flags, mode_t mode);
+
+
+    void *(*store)(int dest_desc, char* src_filename );
+
     int (*close) (void *vfs_info);
     ssize_t (*read) (void *vfs_info, char *buffer, size_t count);
     ssize_t (*write) (void *vfs_info, const char *buf, size_t count);
@@ -304,6 +308,12 @@ int mc_unlink (const vfs_path_t * vpath);
 int mc_ctl (int fd, int ctlop, void *arg);
 int mc_setctl (const vfs_path_t * vpath, int ctlop, void *arg);
 int mc_open (const vfs_path_t * vpath, int flags, ...);
+
+int mc_can_store(const vfs_path_t * vpath);
+int mc_store(int dest_desc, char* src_desc);
+int mc_islocal(const vfs_path_t * vpath);
+
+
 vfs_path_t *mc_getlocalcopy (const vfs_path_t * pathname_vpath);
 int mc_ungetlocalcopy (const vfs_path_t * pathname_vpath, const vfs_path_t * local_vpath,
                        gboolean has_changed);

@@ -852,6 +852,142 @@ fish_dir_load (struct vfs_class *me, struct vfs_s_inode *dir, char *remote_path)
 /* --------------------------------------------------------------------------------------------- */
 
 static int
+fish_file_store_from (struct vfs_class * me, vfs_file_handler_t * fh, char *name, char* local_source)
+{
+    fish_fh_data_t *fish = (fish_fh_data_t *) fh->data;
+    gchar *shell_commands = NULL;
+    struct vfs_s_super *super = FH_SUPER;
+    int code;
+    off_t total = 0;
+    char buffer[BUF_8K];
+    struct stat s;
+    int h;
+    char *quoted_name;
+    vfs_print_message("fish_file_store_from target= %s localname=%s", name, local_source);
+    h = open(local_source, O_RDONLY); //just use a duplicate to reuse old logic
+    if (h == -1){
+    	vfs_print_message("fish_file_store_from dup failed");
+        ERRNOR (EIO, -1);
+    }
+    if (fstat (h, &s) < 0)
+    {
+    	vfs_print_message("fish_file_store_from fstat h failed");
+        close (h);
+        ERRNOR (EIO, -1);
+    }
+
+    /* First, try this as stor:
+     *
+     *     ( head -c number ) | ( cat > file; cat >/dev/null )
+     *
+     *  If 'head' is not present on the remote system, 'dd' will be used.
+     * Unfortunately, we cannot trust most non-GNU 'head' implementations
+     * even if '-c' options is supported. Therefore, we separate GNU head
+     * (and other modern heads?) using '-q' and '-' . This causes another
+     * implementations to fail (because of "incorrect options").
+     *
+     *  Fallback is:
+     *
+     *     rest=<number>
+     *     while [ $rest -gt 0 ]
+     *     do
+     *        cnt=`expr \( $rest + 255 \) / 256`
+     *        n=`dd bs=256 count=$cnt | tee -a <target_file> | wc -c`
+     *        rest=`expr $rest - $n`
+     *     done
+     *
+     *  'dd' was not designed for full filling of input buffers,
+     *  and does not report exact number of bytes (not blocks).
+     *  Therefore a more complex shell script is needed.
+     *
+     *   On some systems non-GNU head writes "Usage:" error report to stdout
+     *  instead of stderr. It makes impossible the use of "head || dd"
+     *  algorithm for file appending case, therefore just "dd" is used for it.
+     */
+
+    quoted_name = strutils_shell_escape (name);
+    vfs_print_message (_("fish: store %s: sending command..."), quoted_name);
+
+    /* FIXME: File size is limited to ULONG_MAX */
+    if (fish->append)
+    {
+    	vfs_print_message("fish_file_store_from appending");
+        shell_commands =
+            g_strconcat (SUP->scr_env, "FISH_FILENAME=%s FISH_FILESIZE=%" PRIuMAX ";\n",
+                         SUP->scr_append, (char *) NULL);
+
+        code = fish_command (me, super, WAIT_REPLY, shell_commands, quoted_name,
+                             (uintmax_t) s.st_size);
+        g_free (shell_commands);
+    }
+    else
+    {
+    	vfs_print_message("fish_file_store_from overriting");
+
+        shell_commands =
+            g_strconcat (SUP->scr_env, "FISH_FILENAME=%s FISH_FILESIZE=%" PRIuMAX ";\n",
+                         SUP->scr_send, (char *) NULL);
+        code = fish_command (me, super, WAIT_REPLY, shell_commands, quoted_name,
+                             (uintmax_t) s.st_size);
+        g_free (shell_commands);
+    }
+
+    g_free (quoted_name);
+
+    if (code != PRELIM)
+    {
+        close (h);
+        ERRNOR (E_REMOTE, -1);
+    }
+
+    while (TRUE)
+    {
+        ssize_t n, t;
+
+        while ((n = read (h, buffer, sizeof (buffer))) < 0)
+        {
+            if ((errno == EINTR) && tty_got_interrupt ())
+                continue;
+            vfs_print_message ("%s", _("fish: Local read failed, sending zeros"));
+            close (h);
+            h = open ("/dev/zero", O_RDONLY);
+        }
+
+        if (n == 0)
+            break;
+
+        t = write (SUP->sockw, buffer, n);
+        if (t != n)
+        {
+            if (t == -1)
+                me->verrno = errno;
+            else
+                me->verrno = EIO;
+            goto error_return;
+        }
+        tty_disable_interrupt_key ();
+        total += n;
+        vfs_print_message ("%s: %" PRIuMAX "/%" PRIuMAX, _("fish: storing file"),
+                           (uintmax_t) total, (uintmax_t) s.st_size);
+    }
+    close (h);
+
+    if (fish_get_reply (me, SUP->sockr, NULL, 0) != COMPLETE)
+        ERRNOR (E_REMOTE, -1);
+
+    vfs_print_message("fish_file_store_from all ok");
+    return 0;
+
+  error_return:
+  	vfs_print_message("fish_file_store_from error_return");
+    close (h);
+    fish_get_reply (me, SUP->sockr, NULL, 0);
+    return -1;
+
+}
+
+
+static int
 fish_file_store (struct vfs_class *me, vfs_file_handler_t * fh, char *name, char *localname)
 {
     fish_fh_data_t *fish = (fish_fh_data_t *) fh->data;
@@ -1614,6 +1750,7 @@ init_fish (void)
     fish_subclass.fh_free_data = fish_fh_free_data;
     fish_subclass.dir_load = fish_dir_load;
     fish_subclass.file_store = fish_file_store;
+    fish_subclass.file_store_from = fish_file_store_from;
     fish_subclass.linear_start = fish_linear_start;
     fish_subclass.linear_read = fish_linear_read;
     fish_subclass.linear_close = fish_linear_close;

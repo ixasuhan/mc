@@ -185,6 +185,9 @@ mc_def_ungetlocalcopy (const vfs_path_t * filename_vpath,
 /*** public functions ****************************************************************************/
 /* --------------------------------------------------------------------------------------------- */
 
+
+
+
 int
 mc_open (const vfs_path_t * vpath, int flags, ...)
 {
@@ -219,6 +222,74 @@ mc_open (const vfs_path_t * vpath, int flags, ...)
 
     return result;
 }
+
+int mc_store(int dest_desc, char* src_filename)
+{
+    struct vfs_class *vfs;
+    int result;
+
+    if (dest_desc == -1 || !vfs_class_data_find_by_handle (dest_desc))
+        return -1;
+
+    vfs = vfs_class_find_by_handle (dest_desc);
+    if (vfs == NULL)
+        return -1;
+
+    if (dest_desc < 3)
+        return close (dest_desc);
+
+    if (!vfs->close)
+        vfs_die ("VFS must support close.\n");
+
+    if (!vfs->store)
+        vfs_die ("VFS must support close.\n");
+
+    void* dest_handle = vfs_class_data_find_by_handle (dest_desc);
+
+    result = (*vfs->store)(dest_handle, src_filename);
+
+    vfs_print_message("mc_store_and_close_dest VFS store returns %d", result);
+
+    if (result == -1)
+        errno = vfs_ferrno (vfs);
+
+    return result;
+
+}
+
+int mc_islocal (const vfs_path_t * vpath)
+{
+
+    const vfs_path_element_t *path_element;
+
+    path_element = vfs_path_get_by_index (vpath, -1);
+
+    if (vfs_path_element_valid (path_element) && path_element->class->open != NULL){
+    	 return 0 == strncmp("localfs", path_element->class->name, 7) ? 1:0;
+
+    }else{
+        errno = -EOPNOTSUPP;
+    }
+    return 0;
+}
+
+
+int mc_can_store (const vfs_path_t * vpath){
+    const vfs_path_element_t *path_element;
+
+    path_element = vfs_path_get_by_index (vpath, -1);
+
+    if (vfs_path_element_valid (path_element) && path_element->class->store != NULL){
+    	 return 1;
+
+    }else{
+        errno = -EOPNOTSUPP;
+    }
+    return 0;
+}
+
+
+
 
 /* --------------------------------------------------------------------------------------------- */
 

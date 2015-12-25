@@ -1204,6 +1204,46 @@ vfs_s_fullpath (struct vfs_class *me, struct vfs_s_inode *ino)
 }
 
 /* --------------------------------------------------------------------------------------------- */
+/* --------------------------- store ---------------------------- */
+void *
+vfs_s_store (int fh, char* src_name){
+
+    int res = 0;
+    struct vfs_class *me = FH_SUPER->me;
+
+    if (me == NULL)
+        return (-1);
+
+    FH_SUPER->fd_usage--;
+
+    if (!FH_SUPER->fd_usage)
+        vfs_stamp_create (me, FH_SUPER);
+
+
+    if ((MEDATA->flags & VFS_S_USETMP) && FH->changed && MEDATA->file_store_from)
+    {
+        char *s = vfs_s_fullpath (me, FH->ino);
+        if (!s)
+            res = -1;
+        else
+        {
+            res = MEDATA->file_store_from (me, fh, s, src_name);
+            g_free (s);
+/*
+            unlink (FH->ino->localname);
+            g_free (FH->ino->localname);
+            FH->ino->localname = NULL;
+*/
+        }
+
+    }
+
+    return res;
+
+}
+/* --------------------------------------------------------------------------------------------- */
+
+
 /* --------------------------- stat and friends ---------------------------- */
 
 void *
@@ -1443,6 +1483,13 @@ vfs_s_init_class (struct vfs_class *vclass, struct vfs_s_subclass *sub)
         sub->find_entry = vfs_s_find_entry_tree;
     vclass->setctl = vfs_s_setctl;
     sub->dir_uptodate = vfs_s_dir_uptodate;
+
+    vclass->store = NULL;
+    if(sub->file_store_from){
+    	vclass->store = vfs_s_store;
+    }
+
+
 }
 
 /* --------------------------------------------------------------------------------------------- */

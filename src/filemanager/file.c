@@ -1639,6 +1639,9 @@ copy_file_file (file_op_total_context_t * tctx, file_op_context_t * ctx,
 
     gettimeofday (&tv_transfer_start, (struct timezone *) NULL);
 
+
+
+
     while ((src_desc = mc_open (src_vpath, O_RDONLY | O_LINEAR)) < 0 && !ctx->skip_all)
     {
         return_status = file_error (_("Cannot open source file \"%s\"\n%s"), src_path);
@@ -1697,6 +1700,9 @@ copy_file_file (file_op_total_context_t * tctx, file_op_context_t * ctx,
     {
         open_flags |= O_CREAT | O_EXCL;
     }
+
+
+
 
     while ((dest_desc = mc_open (dst_vpath, open_flags, src_mode)) < 0)
     {
@@ -1781,6 +1787,19 @@ copy_file_file (file_op_total_context_t * tctx, file_op_context_t * ctx,
         file_progress_show (ctx, 1, 1, "", TRUE);
     return_status = check_progress_buttons (ctx);
     mc_refresh ();
+
+    /** special case store start */
+    if (mc_islocal (src_vpath) && mc_can_store (dst_vpath))
+    {
+    	//yeah no progress no abort:P
+    	int store_result = mc_store (dest_desc, src_path);
+    	if(-1 != store_result)
+    	{
+    		dst_status = DEST_FULL;
+    	}
+    	goto ret;
+    }
+    /** special case end */
 
     if (return_status != FILE_CONT)
         goto ret;
