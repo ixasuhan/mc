@@ -146,7 +146,7 @@ struct vfs_s_subclass
     int (*dir_load) (struct vfs_class * me, struct vfs_s_inode * ino, char *path);
     int (*dir_uptodate) (struct vfs_class * me, struct vfs_s_inode * ino);
     int (*file_store) (struct vfs_class * me, vfs_file_handler_t * fh, char *path, char *localname);
-	int (*file_store_from) (struct vfs_class * me, vfs_file_handler_t * fh, char *path, char* localname);
+	int (*file_store_from) (struct vfs_class * me, vfs_file_handler_t * fh, const char *path, const char* localname);
     int (*linear_start) (struct vfs_class * me, vfs_file_handler_t * fh, off_t from);
     ssize_t (*linear_read) (struct vfs_class * me, vfs_file_handler_t * fh, void *buf, size_t len);
     void (*linear_close) (struct vfs_class * me, vfs_file_handler_t * fh);
@@ -182,7 +182,7 @@ struct vfs_s_super *vfs_get_super_by_vpath (const vfs_path_t * vpath);
 
 void vfs_s_invalidate (struct vfs_class *me, struct vfs_s_super *super);
 char *vfs_s_fullpath (struct vfs_class *me, struct vfs_s_inode *ino);
-
+int vfs_s_store (void* fh, const char* src_name);
 /* network filesystems support */
 int vfs_s_select_on_two (int fd1, int fd2);
 int vfs_s_get_line (struct vfs_class *me, int sock, char *buf, int buf_len, char term);

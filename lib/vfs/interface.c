@@ -226,6 +226,7 @@ mc_open (const vfs_path_t * vpath, int flags, ...)
 int mc_store(int dest_desc, const char* src_filename)
 {
     struct vfs_class *vfs;
+    void* dest_handle = NULL;
     int result;
 
     if (dest_desc == -1 || !vfs_class_data_find_by_handle (dest_desc))
@@ -244,7 +245,7 @@ int mc_store(int dest_desc, const char* src_filename)
     if (!vfs->store)
         vfs_die ("VFS must support close.\n");
 
-    void* dest_handle = vfs_class_data_find_by_handle (dest_desc);
+    dest_handle = vfs_class_data_find_by_handle (dest_desc);
 
     result = (*vfs->store)(dest_handle, src_filename);
 

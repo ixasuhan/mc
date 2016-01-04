@@ -852,7 +852,7 @@ fish_dir_load (struct vfs_class *me, struct vfs_s_inode *dir, char *remote_path)
 /* --------------------------------------------------------------------------------------------- */
 
 static int
-fish_file_store_from (struct vfs_class * me, vfs_file_handler_t * fh, char *name, char* local_source)
+fish_file_store_from (struct vfs_class * me, vfs_file_handler_t * fh, const char *name, const char* local_source)
 {
     fish_fh_data_t *fish = (fish_fh_data_t *) fh->data;
     gchar *shell_commands = NULL;

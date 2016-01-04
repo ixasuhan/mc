@@ -154,8 +154,7 @@ typedef struct vfs_class
 
     void *(*open) (const vfs_path_t * vpath, int flags, mode_t mode);
 
-
-    void *(*store)(int dest_desc, char* src_filename );
+    int (*store)(void* dest_desc, const char* src_filename );
 
     int (*close) (void *vfs_info);
     ssize_t (*read) (void *vfs_info, char *buffer, size_t count);

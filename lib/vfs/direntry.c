@@ -1205,8 +1205,9 @@ vfs_s_fullpath (struct vfs_class *me, struct vfs_s_inode *ino)
 
 /* --------------------------------------------------------------------------------------------- */
 /* --------------------------- store ---------------------------- */
-void *
-vfs_s_store (int fh, char* src_name){
+int
+vfs_s_store (void* fh, const char* src_name)
+{
 
     int res = 0;
     struct vfs_class *me = FH_SUPER->me;
